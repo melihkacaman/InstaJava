@@ -21,21 +21,34 @@
         android:id="@+id/imgText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="25dp"
+        android:layout_marginTop="24dp"
         android:ems="10"
         android:inputType="textPersonName"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imgUpload" />
+        app:layout_constraintTop_toBottomOf="@+id/btn_camera" />
 
     <Button
         android:id="@+id/uploadButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="25dp"
+        android:layout_marginTop="24dp"
         android:onClick="uploadClicked"
         android:text="Upload"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/imgText" />
+
+    <Button
+        android:id="@+id/btn_camera"
+        android:layout_width="298dp"
+        android:layout_height="45dp"
+        android:layout_marginTop="24dp"
+        android:onClick="onClickedCamera"
+        android:text="Take a Picture"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imgUpload" />
 </androidx.constraintlayout.widget.ConstraintLayout>
