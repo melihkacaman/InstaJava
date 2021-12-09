@@ -9,13 +9,16 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Toast;
@@ -29,7 +32,11 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.io.File;
+import java.io.IOException;
 import java.security.Permission;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -37,6 +44,8 @@ public class UploadActivity extends AppCompatActivity {
     Uri imageData;
     ActivityResultLauncher<Intent> activityResultLauncher;
     ActivityResultLauncher<String> permissionLauncher;
+    ActivityResultLauncher<Intent> cameraLauncher;
+
     private ActivityUploadBinding binding;
 
     private FirebaseAuth auth;
@@ -66,8 +75,22 @@ public class UploadActivity extends AppCompatActivity {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_GRANTED
         ){
-            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            startActivityForResult(intent, REQUEST_IMAGE);
+
+            File photoFile = null;
+            try {
+                photoFile = createImageFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            if (photoFile != null){
+                Intent intentt = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                Uri photoURI = FileProvider.getUriForFile(this, "com.example.instajava.provider", photoFile);
+                intentt.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+
+                imageData = photoURI;
+                cameraLauncher.launch(intentt);
+            }
         }else {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.CAMERA},CAMERA_PERMISSION_CODE);
@@ -80,22 +103,26 @@ public class UploadActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == CAMERA_PERMISSION_CODE){
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                startActivityForResult(intent, REQUEST_IMAGE);
+
+                File photoFile = null;
+                try {
+                    photoFile = createImageFile();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                if (photoFile != null){
+                    Intent intentt = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    Uri photoURI = FileProvider.getUriForFile(this, "com.example.instajava.provider", photoFile);
+                    intentt.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+
+                    imageData = photoURI;
+                    cameraLauncher.launch(intentt);
+                }
+
             }else {
                 Toast.makeText(this, "Permission was denied.", Toast.LENGTH_SHORT).show();
             }
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == REQUEST_IMAGE && resultCode == RESULT_OK) {
-            Bundle extras = data.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
-            binding.imgUpload.setImageBitmap(imageBitmap);
         }
     }
 
@@ -162,7 +189,6 @@ public class UploadActivity extends AppCompatActivity {
                     if (intent != null){
                         imageData = intent.getData();
                         binding.imgUpload.setImageURI(imageData);
-
                     }
                 }
             }
@@ -179,5 +205,28 @@ public class UploadActivity extends AppCompatActivity {
                 }
             }
         });
+
+        cameraLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
+            @Override
+            public void onActivityResult(ActivityResult result) {
+                //Bitmap bitmap = BitmapFactory.decodeFile(currentPhotoPath);
+                binding.imgUpload.setImageURI(imageData);
+            }
+        });
+    }
+
+    String currentPhotoPath;
+    private File createImageFile() throws IOException {
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());  // // TODO: 12/8/2021 content provider
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+
+        currentPhotoPath = image.getAbsolutePath();
+        return image;
     }
 }
